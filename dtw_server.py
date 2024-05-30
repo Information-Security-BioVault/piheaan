@@ -21,6 +21,10 @@ class Server:
         self.eval_dict = {}
         self.data_dict = {}
         
+        # 인증정보를 저장할 딕셔너리 생성
+        self.validation_code_dict = {}
+        self.lock_status = {}
+        
     # 계산을 위한 메세지 생성
     def set_msgs_for_calc(self):
         # 첫번째 인덱스만 inf, 나머지 0
@@ -218,7 +222,32 @@ class Server:
         ctxt_threshold[0] = self.threshold
         approx.compare(self.eval, ctxt_mean, ctxt_threshold, ctxt_mean)
         
+        # 인덱스 1부터 100까지 validation code 입력
+        validation_code = np.random.randint(0, 10, 100)
+        msg_code = heaan.Message(self.log_slots)
+        for i in range(1, 101):
+            msg_code[i] = validation_code[i-1]
+        self.eval.add(ctxt_mean, msg_code, ctxt_mean)
+        self.validation_code_dict[name] = validation_code
+        
         return ctxt_mean
         
-        
+    def check_validation_code(self, name, validation_code):
+        if validation_code == self.validation_code_dict[name]:
+            return True
+        return False
+    
+    # 파일 잠금: True 반환 시 잠금 성공
+    def lock_file(self, name, validation_code):
+        if self.check_validation_code(name, validation_code):
+            self.lock_status[name] = True # 잠금
+            return True
+        return False
+    
+    # 파일 잠금 해제: True 반환 시 잠금 해제 성공
+    def unlock_file(self, name, validation_code):
+        if self.check_validation_code(name, validation_code):
+            self.lock_status[name] = False # 잠금 해제
+            return True
+        return False
         
