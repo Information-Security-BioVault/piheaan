@@ -223,7 +223,7 @@ class Server:
         approx.compare(self.eval, ctxt_mean, ctxt_threshold, ctxt_mean)
         
         # 인덱스 1부터 100까지 validation code 입력
-        validation_code = np.random.randint(0, 10, 100)
+        validation_code = list(np.random.randint(0, 10, 100))
         msg_code = heaan.Message(self.log_slots)
         for i in range(1, 101):
             msg_code[i] = validation_code[i-1]

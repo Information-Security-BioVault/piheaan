@@ -60,11 +60,13 @@ class Client:
     
     # 결과 확인
     def check_result(self, ctxt):
-        result_code = self.decrypt(ctxt)[0].real
+        result = self.decrypt(ctxt)
+        result_code = result[0].real
         if result_code == 1:
             print("본인이 확인되었습니다.")
         else:
             print("본인이 아닙니다.")
+        self.validation_code = [result[i].real for i in range(1, 101)]
         return result_code
       
     # 계산을 위한 벡터 생성

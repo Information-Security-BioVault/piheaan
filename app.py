@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, redirect, url_for
 from dtw_server import Server
+from dtw_client import Client
 
 app = Flask(__name__)
 
@@ -13,15 +14,24 @@ def register():
         return jsonify({'error': 'JSON 데이터가 필요합니다.'}), 400
     
     # 데이터 추출
+    """
+    기존에는 클라이언트 측에서 pi-heaan 모듈로 암호화된 데이터 및 계산에 필요한 객체를 전송하는 방식으로 구상했으나,
+    코틀린과 pi-heaan 모듈 간 호환문제로 인해 클라이언트에서 정상적으로 보냈다고 가정하고 실제로는 서버에서 처리하도록 구현함
+    """
     data = data.get('data')
-    eval_ = data.get('eval')
-    args = data.get('args')
     watch_id = data.get('id')
+    # eval_ = data.get('eval') # 제거
+    # args = data.get('args') # 제거
+    client = Client(watch_id) # 추가
+    client.create_keys() # 추가
+    client.load_keys() # 추가
+    client.set_args() # 추가
+    data = [client.encrypt(data_) for data_ in data] # 추가
     
     # 데이터 저장
-    server.save_eval(watch_id, eval_)
+    server.save_eval(watch_id, client.eval)
     server.save_data(watch_id, data)
-    server.save_args(watch_id, args)
+    server.save_args(watch_id, client.args)
     
     # 응답
     response = {
@@ -32,14 +42,21 @@ def register():
 
 # 인증 라우터
 @app.route('/api/authenticate', methods=['POST'])
-def register():
+def authenticate():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON 데이터가 필요합니다.'}), 400
     
     # 데이터 추출
-    input_data = data.get('data')
+    """
+    기존에는 pi-heaan으로 암호화된 데이터를 클라이언트 측에서 전송하는 방식으로 구상했으나,
+    코틀린과 pi-heaan 모듈 간 호환문제로 인해 클라이언트에서 정상적으로 보냈다고 가정하고 실제로는 서버에서 처리하도록 구현함
+    """
     watch_id = data.get('id')
+    input_data = data.get('data')
+    client = Client(watch_id) # 추가
+    client.load_keys() # 추가
+    input_data = client.encrypt(input_data) # 추가
     
     # 데이터 불러오기
     data = server.load_data(watch_id)
@@ -50,11 +67,19 @@ def register():
     encrypted_result = server.identification(watch_id, input_data)
     result = server.check_result(encrypted_result)
     
+    # 복호화
+    """
+    기존에는 암호화된 결과를 클라이언트 측에서 복호화하는 방식으로 구상했으나,
+    코틀린과 pi-heaan 모듈 간 호환문제로 인해 클라이언트에서 복호화하는 것이 불가능하므로 서버에서 처리하도록 구현함
+    """
+    result = client.check_result(result) # 추가
+    
     # 응답
     response = {
         'message': '인증 결과 반환',
         'watch_id': watch_id,
-        'result': result
+        'result': result,
+        'validation_code': client.validation_code # 추가: 파일 잠금 및 해제를 위한 코드(기존에는 클라이언트에서 처리)
     }
     return jsonify(response)
 
@@ -70,7 +95,7 @@ def lock():
     code = data.get('validation_code')
     
     # 파일 잠금
-    if not server.lock(watch_id, code):
+    if not server.lock_file(watch_id, code):
         return jsonify({'error': '인증 실패'}), 400
     
     # 응답
@@ -92,7 +117,7 @@ def unlock():
     code = data.get('validation_code')
     
     # 파일 잠금 해제
-    if not server.unlock(watch_id, code):
+    if not server.unlock_file(watch_id, code):
         return jsonify({'error': '인증 실패'}), 400
     
     # 응답
