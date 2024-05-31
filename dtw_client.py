@@ -58,7 +58,7 @@ class Client:
         self.dec.decrypt(ctxt, self.sk, msg)
         return msg
     
-    # 결과 확인
+    # Check result
     async def check_result(self, ctxt):
         result = await self.decrypt(ctxt)
         result_code = result[0].real
@@ -69,9 +69,9 @@ class Client:
         self.validation_code = [result[i].real for i in range(1, 101)]
         return result_code
       
-    # 계산을 위한 벡터 생성
+    # Create context instances for calculation
     def set_args(self):
-        # 계산을 위한 벡터
+        # Initialize ctxt instances
         ctxt_n_tmp = heaan.Ciphertext(self.context)
         ctxt_m_tmp = heaan.Ciphertext(self.context)
         ctxt_cost = heaan.Ciphertext(self.context)
@@ -85,7 +85,7 @@ class Client:
         ctxt_result = heaan.Ciphertext(self.context)
         ctxt_threshold = heaan.Ciphertext(self.context)
         
-        # 거리 행렬 생성
+        # Create distance matrix
         msg_dist_n = heaan.Message(self.log_slots)
         msg_dist_m = heaan.Message(self.log_slots)
         for i in range(100+1):

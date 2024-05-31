@@ -9,39 +9,39 @@ from time import time
 
 class Server:
     def __init__(self):
-        # 상수 정의
+        # Define constant
         self.log_slots = 15
         self.inf1 = 1e+10
         self.inf2 = 1e+15
         self.inf2_inverse = 1e-15
         self.threshold = 0.00001
         
-        # 데이터를 저장할 딕셔너리 생성
+        # Define dictionaries to store data
         self.args_dict = {}
         self.eval_dict = {}
         self.data_dict = {}
         
-        # 인증정보를 저장할 딕셔너리 생성
+        # Define dictionary to store authentication information
         self.validation_code_dict = {}
         self.lock_status = {}
         
-    # 계산을 위한 메세지 생성
+    # Create messages for calculation
     def set_msgs_for_calc(self):
-        # 첫번째 인덱스만 inf, 나머지 0
+        # First index is inf, the rest is 0
         """
         특정 인덱스에 inf 값을 넣기 위한 벡터
         """
         msg_inf = heaan.Message(self.log_slots)
         msg_inf[0] = float(self.inf1)
 
-        # 첫번째 인덱스만 1, 나머지 0
+        # First index is 1, the rest is 0
         """
         특정 인덱스만 남기고 나머지를 0으로 초기화하기 위한 벡터
         """
         msg_scalar = heaan.Message(self.log_slots)
         msg_scalar[0] = 1
 
-        # 첫번째 인덱스만 0, 나머지 1
+        # First index is 0, the rest is 1
         """
         특정 인덱스 값을 0으로 초기화하기 위한 벡터
         """
@@ -52,47 +52,47 @@ class Server:
         
         self.msgs_for_calc = [msg_inf, msg_scalar, msg_eraser, msg_eraser_tmp]
     
-    # 계산을 위한 eval 객체 저장
+    # Save eval instance for calculation
     def save_eval(self, name, eval_):
         self.eval_dict[name] = eval_
         
-    # 계산을 위한 eval 객체 불러오기
+    # Load eval instance for calculation
     def load_eval(self, name):
         self.eval = self.eval_dict[name]
         
-    # Client로부터 받은 인자 저장
+    # Save the arguments received from the client
     def save_args(self, name, *args):
         self.lock_status[name] = True
         self.args_dict[name] = args[0]
         
-    # Client로부터 받은 인자 불러오기
+    # Load the arguments received from the client
     def load_args(self, name):
         self.args = self.args_dict[name]
 
-    # Client로부터 받은 데이터 저장
+    # Save the data received from the client
     def save_data(self, name, data):
         self.data_dict[name] = data
 
-    # Client로부터 받은 데이터 불러오기
+    # Load the data received from the client
     def load_data(self, name):
         data = self.data_dict[name]
         return data
 
-    # bootstrap check
+    # Bootstrap check
     def check_bootstrap(self, ctxt):
         if ctxt.level == self.eval.min_level_for_bootstrap:
             self.eval.bootstrap(ctxt, ctxt)
 
-    # 두 시계열 간 dtw 거리 계산
+    # Calculate DTW distance between two time series
     async def dtw(self, ctxt_n, ctxt_m):
         n, m = 100, 100
         
-        # 변수 초기화
+        # Initialize arguments
         ctxt_n_tmp, ctxt_m_tmp, ctxt_cost, ctxt_zero, ctxt_left, ctxt_up, ctxt_diagonal, ctxt_threshold,\
         ctxt_min, ctxt_max, ctxt_normalizer, ctxt_result, ctxt_dist_n, ctxt_dist_m = self.args
         msg_inf, msg_scalar, msg_eraser, msg_eraser_tmp = self.msgs_for_calc
 
-        # 계산
+        # Calculate DTW distance
         for i in tqdm(range(1, n+1)):
             # dtw_matrix[1][0] = float('inf')
             self.eval.add(ctxt_dist_m, msg_inf, ctxt_dist_m)
@@ -129,7 +129,7 @@ class Server:
                 self.eval.left_rotate(ctxt_dist_n, j, ctxt_up)
                 self.eval.left_rotate(ctxt_dist_n, j-1, ctxt_diagonal)
                 
-                # min_max 함수에 입력가능한 범위로 변환
+                # Transform to the range that can be input to the min_max function
                 self.eval.mult(ctxt_left, self.inf2_inverse, ctxt_left)
                 self.eval.mult(ctxt_up, self.inf2_inverse, ctxt_up)
                 self.eval.mult(ctxt_diagonal, self.inf2_inverse, ctxt_diagonal)
@@ -160,7 +160,7 @@ class Server:
                 self.eval.right_rotate(ctxt_cost, j, ctxt_cost)
                 self.eval.add(ctxt_dist_m, ctxt_cost, ctxt_dist_m)
 
-                # bootstrap check
+                # Bootstrap check
                 self.check_bootstrap(ctxt_cost)
                 self.check_bootstrap(ctxt_dist_m)
                 self.check_bootstrap(ctxt_left)
@@ -175,7 +175,7 @@ class Server:
             """
             self.eval.mult(ctxt_dist_m, 1, ctxt_dist_n)
 
-        # 결과값 반환
+        # Return result
         """
         1. dtw_matrix[1][m] = dtw 결과값
         2. ctxt_dist_m를 m만큼 이동시켜 dtw 결과값을 첫번째 인덱스로 이동
@@ -186,40 +186,36 @@ class Server:
         
         return ctxt_result
     
-    # 본인 확인하기
+    # Identification
     async def identification(self, name, input_data):
-        # 클라이언트로부터 받은 eval 객체 불러오기
+        # Load eval instance, arguments and data that received from the client
         self.load_eval(name)
-
-        # 클라이언트로부터 받은 인자 불러오기
         self.load_args(name)
-        
-        # 계산을 위한 메세지 생성
-        self.set_msgs_for_calc()
-        
-        # 클라이언트로부터 받은 인증용 데이터 불러오기
         total_data = self.load_data(name)
         n_data = len(total_data)
         
-        # DTW 거리 계산
+        # Initialize messages for calculation
+        self.set_msgs_for_calc()
+        
+        # Calculate DTW distance between input data and all data
         total_result = []
         for data in total_data:
             result = await self.dtw(input_data, data)
             total_result.append(result)
             
-        # 총합 계산
+        # Calculate the sum of the results
         ctxt_sum = total_result[0]
         for result in total_result[1:]:
             print(result)
             self.eval.add(ctxt_sum, result, ctxt_sum)
             
-        # 평균 계산
+        # Calculate the mean of the results
         ctxt_mean = ctxt_sum
         msg_div = heaan.Message(self.log_slots)
         msg_div[0] = 1 / n_data
         self.eval.mult(ctxt_sum, msg_div, ctxt_mean)
         
-        # 임계값 넘을 경우 1, 아닐 경우 0
+        # If the mean is less than the threshold, return 1 else return 0
         msg_inf, msg_scalar, msg_eraser, msg_eraser_tmp = self.msgs_for_calc
         ctxt_threshold = self.args[7]
         msg_threshold = msg_inf
@@ -231,7 +227,7 @@ class Server:
         
         approx.compare(self.eval, ctxt_mean, ctxt_threshold, ctxt_mean)
         
-        # 인덱스 1부터 100까지 validation code 입력
+        # Insert validation code from index 1 to 100
         validation_code = list(np.random.randint(0, 10, 100))
         msg_code = heaan.Message(self.log_slots)
         for i in range(1, 101):
@@ -246,17 +242,17 @@ class Server:
             return True
         return False
     
-    # 파일 잠금: True 반환 시 잠금 성공
+    # Lock file: Return True if locked successfully
     def lock_file(self, name, validation_code):
         if self.check_validation_code(name, validation_code):
-            self.lock_status[name] = True # 잠금
+            self.lock_status[name] = True # Lock
             return True
         return False
     
-    # 파일 잠금 해제: True 반환 시 잠금 해제 성공
+    # Unlock file: Return True if unlocked successfully
     def unlock_file(self, name, validation_code):
         if self.check_validation_code(name, validation_code):
-            self.lock_status[name] = False # 잠금 해제
+            self.lock_status[name] = False # Unlock
             return True
         return False
         

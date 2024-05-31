@@ -142,9 +142,9 @@ def request_authority():
     
     # 응답
     if lock_status:
-        return jsonify({'message': '파일 잠금 상태입니다.'}), 400
+        return jsonify({'message': '파일 잠금 상태입니다.'}), 200
     else:
-        return jsonify({'message': '파일 잠금 해제 상태입니다.'}), 400
+        return jsonify({'message': '파일 잠금 해제 상태입니다.'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
