@@ -1,0 +1,44 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.23.143:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-511-607
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:60003
+ * Running on http://192.168.23.143:60003
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 135-511-607
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/Users/jihyeok/workspace/BioVault/app.py", line 150, in <module>
+  File "/Users/jihyeok/workspace/BioVault/app.py", line 150, in <module>
+    app.run(host='0.0.0.0', port=5001, debug=True)
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/flask/app.py", line 625, in run
+    app.run(host='0.0.0.0', port=5001, debug=True)
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/flask/app.py", line 625, in run
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/serving.py", line 1106, in run_simple
+    run_simple(t.cast(str, host), port, self, **options)
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/serving.py", line 1106, in run_simple
+    run_with_reloader(
+    run_with_reloader(
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/_reloader.py", line 448, in run_with_reloader
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/_reloader.py", line 448, in run_with_reloader
+    ensure_echo_on()
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/_reloader.py", line 428, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')
+    ensure_echo_on()
+  File "/Users/jihyeok/.pyenv/versions/3.9.6/lib/python3.9/site-packages/werkzeug/_reloader.py", line 428, in ensure_echo_on
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+termios.error: (4, 'Interrupted system call')

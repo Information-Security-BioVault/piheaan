@@ -14,7 +14,7 @@ class Server:
         self.inf1 = 1e+10
         self.inf2 = 1e+15
         self.inf2_inverse = 1e-15
-        self.threshold = 0.00001
+        self.threshold = 0.1
         
         # Define dictionaries to store data
         self.args_dict = {}
