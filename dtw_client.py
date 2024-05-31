@@ -39,7 +39,7 @@ class Client:
         self.enc = heaan.Encryptor(self.context) # for encrypt
         
     # 암호화
-    def encrypt(self, data):
+    async def encrypt(self, data):
         # Create message
         msg = heaan.Message(self.log_slots)
         self.len = len(data)
@@ -52,15 +52,15 @@ class Client:
         return ctxt
          
     # 복호화         
-    def decrypt(self, ctxt):
+    async def decrypt(self, ctxt):
         # Decrypt
         msg = heaan.Message(self.log_slots)
         self.dec.decrypt(ctxt, self.sk, msg)
         return msg
     
     # 결과 확인
-    def check_result(self, ctxt):
-        result = self.decrypt(ctxt)
+    async def check_result(self, ctxt):
+        result = await self.decrypt(ctxt)
         result_code = result[0].real
         if result_code == 1:
             print("본인이 확인되었습니다.")
@@ -83,6 +83,7 @@ class Client:
         ctxt_max = heaan.Ciphertext(self.context)
         ctxt_normalizer = heaan.Ciphertext(self.context)
         ctxt_result = heaan.Ciphertext(self.context)
+        ctxt_threshold = heaan.Ciphertext(self.context)
         
         # 거리 행렬 생성
         msg_dist_n = heaan.Message(self.log_slots)
@@ -97,5 +98,5 @@ class Client:
         self.enc.encrypt(msg_dist_m, self.pk, ctxt_dist_m)
         
         self.args = ctxt_n_tmp, ctxt_m_tmp, ctxt_cost, ctxt_zero, ctxt_left, ctxt_up, ctxt_diagonal, \
-                    ctxt_min, ctxt_max, ctxt_normalizer, ctxt_result, ctxt_dist_n, ctxt_dist_m
+                    ctxt_min, ctxt_max, ctxt_normalizer, ctxt_result, ctxt_dist_n, ctxt_dist_m, ctxt_threshold
     

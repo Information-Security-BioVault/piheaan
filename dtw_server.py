@@ -14,7 +14,7 @@ class Server:
         self.inf1 = 1e+10
         self.inf2 = 1e+15
         self.inf2_inverse = 1e-15
-        self.threshold = 0.3
+        self.threshold = 0.00001
         
         # 데이터를 저장할 딕셔너리 생성
         self.args_dict = {}
@@ -62,6 +62,7 @@ class Server:
         
     # Client로부터 받은 인자 저장
     def save_args(self, name, *args):
+        self.lock_status[name] = True
         self.args_dict[name] = args[0]
         
     # Client로부터 받은 인자 불러오기
@@ -83,11 +84,11 @@ class Server:
             self.eval.bootstrap(ctxt, ctxt)
 
     # 두 시계열 간 dtw 거리 계산
-    def dtw(self, ctxt_n, ctxt_m):
+    async def dtw(self, ctxt_n, ctxt_m):
         n, m = 100, 100
         
         # 변수 초기화
-        ctxt_n_tmp, ctxt_m_tmp, ctxt_cost, ctxt_zero, ctxt_left, ctxt_up, ctxt_diagonal, \
+        ctxt_n_tmp, ctxt_m_tmp, ctxt_cost, ctxt_zero, ctxt_left, ctxt_up, ctxt_diagonal, ctxt_threshold,\
         ctxt_min, ctxt_max, ctxt_normalizer, ctxt_result, ctxt_dist_n, ctxt_dist_m = self.args
         msg_inf, msg_scalar, msg_eraser, msg_eraser_tmp = self.msgs_for_calc
 
@@ -186,7 +187,7 @@ class Server:
         return ctxt_result
     
     # 본인 확인하기
-    def identification(self, name, input_data):
+    async def identification(self, name, input_data):
         # 클라이언트로부터 받은 eval 객체 불러오기
         self.load_eval(name)
 
@@ -203,12 +204,13 @@ class Server:
         # DTW 거리 계산
         total_result = []
         for data in total_data:
-            result = self.dtw(data, input_data)
+            result = await self.dtw(input_data, data)
             total_result.append(result)
             
         # 총합 계산
         ctxt_sum = total_result[0]
         for result in total_result[1:]:
+            print(result)
             self.eval.add(ctxt_sum, result, ctxt_sum)
             
         # 평균 계산
@@ -218,8 +220,15 @@ class Server:
         self.eval.mult(ctxt_sum, msg_div, ctxt_mean)
         
         # 임계값 넘을 경우 1, 아닐 경우 0
-        ctxt_threshold = self.msgs_for_calc[1]
-        ctxt_threshold[0] = self.threshold
+        msg_inf, msg_scalar, msg_eraser, msg_eraser_tmp = self.msgs_for_calc
+        ctxt_threshold = self.args[7]
+        msg_threshold = msg_inf
+        msg_threshold[0] = self.threshold
+        self.eval.add(ctxt_threshold, msg_threshold, ctxt_threshold)
+        
+        msg_threshold = msg_inf
+        msg_threshold[0] = self.threshold
+        
         approx.compare(self.eval, ctxt_mean, ctxt_threshold, ctxt_mean)
         
         # 인덱스 1부터 100까지 validation code 입력
